@@ -36,15 +36,19 @@ RUN apk add --no-cache \
 		git \
 	;
 
-RUN set -eux; \
-    install-php-extensions \
-    	intl \
-    	zip \
-    	apcu \
-		opcache \
-    ;
+RUN set -eux;
+RUN install-php-extensions intl;
+RUN install-php-extensions zip;
+# RUN install-php-extensions apcu;
+RUN install-php-extensions opcache;
 
 ###> recipes ###
+###> doctrine/doctrine-bundle ###
+RUN apk add --no-cache --virtual .pgsql-deps postgresql-dev; \
+	docker-php-ext-install -j$(nproc) pdo_pgsql; \
+	apk add --no-cache --virtual .pgsql-rundeps so:libpq.so.5; \
+	apk del .pgsql-deps
+###< doctrine/doctrine-bundle ###
 ###< recipes ###
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
@@ -104,8 +108,8 @@ RUN rm $PHP_INI_DIR/conf.d/app.prod.ini; \
 
 COPY --link docker/php/conf.d/app.dev.ini $PHP_INI_DIR/conf.d/
 
-RUN set -eux; \
-	install-php-extensions xdebug
+RUN set -eux; 
+#RUN install-php-extensions xdebug;
 
 RUN rm -f .env.local.php
 
